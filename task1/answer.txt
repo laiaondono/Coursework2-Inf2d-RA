@@ -1,0 +1,78 @@
+coursework 2 Inf2d - s2139487
+
+ANSWERS FOR PART 1
+
+TASK 1.1: DESCRIBING THE WORLD STATE
+predicates:
+    room(r): defines a room in the labyrinth
+    bothseus(b): defines BoTheseus
+    minobot(m): defines Minobot
+    tool(t): defines a tool (such as a sword)
+
+    adjacent(room(r1), room(r2)): room r1 is connected to room r2 in the labyrinth
+    located_in(x, room(r)): x (bothseus(b), minobot(m) or tool(t)) is located in room r in the labyrinth
+    is_defeated(minobot(m)): Minobot is defeated .todo
+    is_holding(tool(sword)): BoTheseus is holding tool t
+
+initial state:
+    adjacent(room(F), room(E)) and adjacent(room(E), room(F)) and adjacent(room(E), room(B)) and adjacent(room(B), room(E))
+    adjacent(room(B), room(C)) and adjacent(room(C), room(B)) and adjacent(room(C), room(D)) and adjacent(room(D), room(C))
+    adjacent(room(B), room(A)) and adjacent(room(A), room(B)) and adjacent(room(A), room(L)) and adjacent(room(L), room(A))
+    and located_in(bothseus(b), room(E)) and located_in(minobot(m), room(L)) and located_in(tool(sword), room(D))
+
+goal:
+    is_defeated(minobot(m)) and located_in(bothseus(b), room(E))
+
+
+TASK 1.2: ACTIONS
+actions:
+    move:   - arguments: room(r1), room(r2)
+            - preconditions: adjacent(room(r1), room(r2)) and adjacent(room(r2), room(r1)) and located_in(bothseus(b), room(r1)) 
+                             and not(located_in(bothseus(b), room(r2))) and room(r1) ≠ room(r2)
+            - effects: located_in(bothseus(b), room(r2)) and not(located_in(bothseus(b), room(r1)))
+
+    pick_up:    - arguments: tool(sword), room(r)
+                - preconditions: located_in(tool(sword), room(r)) and located_in(bothseus(b), room(r)) and not (exists (tool(t)). (is_holding(t)))
+                - effects: is_holding(tool(sword))
+
+    slay:   - arguments: tool(sword), room(r)
+            - preconditions: is_holding(tool(sword)) and located_in(bothseus(b), room(r)) and located_in(minobot(m), room(r))
+            - effects: is_defeated(minobot(m))
+
+
+TASK 1.3: BACKWARD STATE SPACE SEARCH
+initial state:
+    adjacent(room(F), room(E)) and adjacent(room(E), room(F)) and adjacent(room(E), room(B)) and adjacent(room(B), room(E))
+    adjacent(room(B), room(C)) and adjacent(room(C), room(B)) and adjacent(room(C), room(D)) and adjacent(room(D), room(C))
+    adjacent(room(B), room(A)) and adjacent(room(A), room(B)) and adjacent(room(A), room(L)) and adjacent(room(L), room(A))
+    and located_in(bothseus(b), room(B)) and located_in(minobot(m), room(L)) and located_in(tool(sword), room(A))
+
+goal:
+    is_defeated(minobot(m))
+
+steps:
+g1 = is_defeated(minobot(m))
+- available actions: slay(room(r), tool(sword))
+- choose: slay(room(r), tool(sword))
+
+g2 = is_holding(tool(sword)) and located_in(BoTheseus, room(r)) and located_in(minobot(m), room(r))
+- available actions: pick_up(tool(sword), room(r)), move(room(r2), room(r))
+- choose: move(room(r2), room(r))
+
+g3 = is_holding(tool(sword)) and located_in(BoTheseus, room(r2)) and located_in(minobot(m), room(r)) and adjacent(room(r), room(r2)) 
+     and adjacent(room(r2), room(r)) and room(r) ≠ room(r2)
+- available actions: pick_up(tool(sword), room(r2)), move(room(r3), room(r2))
+- choose: pick_up(tool(sword), room(r2))
+
+g4 = located_in(tool(sword), room(r2)) and located_in(BoTheseus, room(r2)) and not (exists (tool(t)). (is_holding(t))) 
+     and located_in(minobot(m), room(r)) and adjacent(room(r), room(r2)) and adjacent(room(r2), room(r)) and room(r) ≠ room(r2)
+- available actions: move(room(r3), room(r2))
+- choose: move(room(r3), room(r2))
+
+g5 = located_in(tool(sword), room(r2)) and located_in(BoTheseus, room(r3)) and not (exists (tool(t)). (is_holding(t))) 
+     and located_in(minobot(m), room(r)) and adjacent(room(r), room(r2)) and adjacent(room(r2), room(r)) 
+     and adjacent(room(r2), room(r3)) and adjacent(room(r3), room(r2)) and room(room(r)) ≠ room(r2) and room(r3) ≠ room(r3)
+
+We get that g5 satisfies the initial state by substituting {r = L, r2 = A, r3 = B}
+
+Therefore, the final plan is: move(room(B), room(A)), pick_up(tool(sword), room(A)), move(room(A), room(L)), slay(room(L), tool(sword))
